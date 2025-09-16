@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtered Candidates - {{ skill }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Candidates with Skill: {{ skill }}</h1>
+
+        <!-- Chart Container for Skills -->
+        <canvas id="skillsChart" width="400" height="200" class="mt-4"></canvas>
+
+        {% if candidates %}
+            <ul class="list-group mt-3">
+                {% for candidate in candidates %}
+                    <li class="list-group-item">
+                        {{ candidate.name }} - {{ candidate.email }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No candidates found with the skill "{{ skill }}".</p>
+        {% endif %}
+        <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">Back to Job Screening</a>
+    </div>
+
+    <script>
+        // Prepare data for the skills chart
+        const totalSkills = {{ total_skills | tojson | default('{}') }};
+        const skillNames = Object.keys(totalSkills);
+        const skillCounts = Object.values(totalSkills);
+
+        // Create the skills chart
+        const ctx = document.getElementById('skillsChart').getContext('2d');
+        const skillsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: skillNames,
+                datasets: [{
+                    label: 'Skill Frequency',
+                    data: skillCounts,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                onClick: (event) => {
+                    const activePoints = skillsChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                    if (activePoints.length) {
+                        const skillIndex = activePoints[0].index;
+                        const selectedSkill = skillNames[skillIndex];
+                        window.location.href = `/candidates?skill=${encodeURIComponent(selectedSkill)}`;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
